@@ -1,0 +1,99 @@
+<project name="Labyrinth" default="dist">
+
+	<property name="lib" value="labyrinth.lib" />
+	
+	<path id="libs">
+		<pathelement path="/usr/share/lwjgl/jar/lwjgl.jar" />
+		<pathelement path="/usr/share/lwjgl/jar/lwjgl_util.jar" />
+		<pathelement path="/usr/share/java/slick.jar" />
+	</path>
+
+	<available property="lib.exists" type="dir" file="${lib}" />
+	<available property="resource.exists" type="dir" file="resource" />
+	
+	
+	<target name="resource" unless="resource.exists">
+		<mkdir dir="resource.tmp" />
+		<unzip src="../labyrinth.zip" dest="resource.tmp">
+			<patternset>
+				<include name="labyrinth/jar/labyrinth.jar" />
+			</patternset>
+			<flattenmapper />
+		</unzip>
+		<unjar src="resource.tmp/labyrinth.jar" dest=".">
+			<patternset>
+				<include name="resource/*" />
+			</patternset>
+		</unjar>
+		<delete dir="resource.tmp" />
+	</target>
+
+
+	<target name="compile">
+		<mkdir dir="build" />
+		<javac srcdir="labyrinth:texture" destdir="build" classpathref="libs"
+			includeantruntime="false" />
+	</target>
+	
+	
+	<target name="dist" depends="resource, compile">
+		<jar destfile="labyrinth.jar">
+			<fileset dir="build" />
+			<fileset dir=".">
+				<include name="resource/*" />
+			</fileset>
+			<manifest>
+				<attribute name="Main-Class" value="labyrinth.Main" />
+				<attribute name="Class-Path" value=
+					"${lib}/lwjgl.jar ${lib}/lwjgl_util.jar ${lib}/slick.jar" />
+			</manifest>
+		</jar>
+	</target>
+	
+	
+	<target name="doc">
+		<exec executable="doxygen" />
+	</target>
+	
+	
+	<target name="lib" unless="lib.exists">
+		<mkdir dir="${lib}" />
+		<copy todir="${lib}">
+			<path refid="libs" />
+			<flattenmapper />
+		</copy>
+		<mkdir dir="${lib}/natives" />
+		<copy todir="${lib}/natives">
+			<fileset dir="/usr/share/lwjgl/native/">
+				<include name="linux/*" />
+				<include name="windows/*" />
+				<include name="macosx/*" />
+			</fileset>
+			<flattenmapper />
+		</copy>
+	</target>
+	
+	
+	<target name="run" depends="dist, lib">
+		<java jar="labyrinth.jar" fork="true" />
+	</target>
+	
+	
+	<target name="zip" depends="dist, lib">
+		<zip destfile="labyrinth.zip" basedir="."
+			includes="labyrinth.lib/** labyrinth.jar" />
+	</target>
+
+
+	<target name="clean">
+		<delete includeEmptyDirs="true" quiet="true">
+			<fileset dir="build" />
+			<fileset dir="doc" />
+			<fileset dir="${lib}" />
+			<fileset file="labyrinth.jar" />
+			<fileset file="labyrinth.zip" />
+		</delete>
+	</target>
+
+</project>
+
